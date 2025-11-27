@@ -46,18 +46,23 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("patient:delete", (id) => {
+    if (patients[id]) {
+      delete patients[id];
+      io.to("staff").emit("patient:remove", id);
+    } else {
+    }
+  });
+
   socket.on("disconnect", () => {
     console.log("Client disconnected", socket.id);
     if (patients[socket.id]) {
-      console.log("if disconnect");
       patients[socket.id].status = "inactive";
       const patientData = {
         ...patients[socket.id],
         id: socket.id,
       };
       io.to("staff").emit("patient:update", patientData);
-    } else {
-      console.log("else disconnect");
     }
   });
 });
