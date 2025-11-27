@@ -15,9 +15,8 @@ io.on("connection", (socket) => {
 
   socket.on("join", (role) => {
     socket.join(role);
-    console.log(`Socket ${socket.id} joined ${role}`);
+    // console.log(`Socket ${socket.id} joined ${role}`);
     if (role === "staff") {
-      console.log("1");
       const allPatients = Object.entries(patients).map(
         ([socketId, patientData]) => ({
           ...patientData,
@@ -50,8 +49,15 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("Client disconnected", socket.id);
     if (patients[socket.id]) {
-      io.to("staff").emit("patient:remove", socket.id);
-      delete patients[socket.id];
+      console.log("if disconnect");
+      patients[socket.id].status = "inactive";
+      const patientData = {
+        ...patients[socket.id],
+        id: socket.id,
+      };
+      io.to("staff").emit("patient:update", patientData);
+    } else {
+      console.log("else disconnect");
     }
   });
 });
