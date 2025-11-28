@@ -57,7 +57,10 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("Client disconnected", socket.id);
     if (patients[socket.id]) {
-      patients[socket.id].status = "inactive";
+      // Only change status to inactive if the patient hasn't submitted their form
+      if (patients[socket.id].status !== "submitted") {
+        patients[socket.id].status = "inactive";
+      }
       const patientData = {
         ...patients[socket.id],
         id: socket.id,
