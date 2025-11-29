@@ -15,7 +15,6 @@ io.on("connection", (socket) => {
 
   socket.on("join", (role) => {
     socket.join(role);
-    // console.log(`Socket ${socket.id} joined ${role}`);
     if (role === "staff") {
       const allPatients = Object.entries(patients).map(
         ([socketId, patientData]) => ({
@@ -57,7 +56,6 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("Client disconnected", socket.id);
     if (patients[socket.id]) {
-      // Only change status to inactive if the patient hasn't submitted their form
       if (patients[socket.id].status !== "submitted") {
         patients[socket.id].status = "inactive";
       }
