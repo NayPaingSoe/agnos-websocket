@@ -9,6 +9,22 @@ const io = new Server(server, {
 });
 
 const patients = {};
+const patientTimeouts = {};
+
+const INACTIVITY_TIMEOUT = 5000; // 5 seconds
+
+function startInactivityTimer(socketId) {
+  clearTimeout(patientTimeouts[socketId]);
+  patientTimeouts[socketId] = setTimeout(() => {
+    if (patients[socketId] && patients[socketId].status !== "submitted") {
+      patients[socketId].status = "inactive";
+      io.to("staff").emit("patient:update", {
+        id: socketId,
+        ...patients[socketId],
+      });
+    }
+  }, INACTIVITY_TIMEOUT);
+}
 
 io.on("connection", (socket) => {
   console.log("New client connected", socket.id);
@@ -30,10 +46,12 @@ io.on("connection", (socket) => {
     patients[socket.id] = { ...patients[socket.id], ...data };
     if (
       patients[socket.id].status === "submitted" ||
+      patients[socket.id].status === "inactive" ||
       !patients[socket.id].status
     ) {
       patients[socket.id].status = "active";
     }
+    startInactivityTimer(socket.id);
     io.to("staff").emit("patient:update", {
       id: socket.id,
       ...patients[socket.id],
@@ -42,6 +60,7 @@ io.on("connection", (socket) => {
 
   socket.on("patient:submit", () => {
     if (patients[socket.id]) {
+      clearTimeout(patientTimeouts[socket.id]);
       patients[socket.id].status = "submitted";
       const patientData = {
         ...patients[socket.id],
@@ -61,6 +80,7 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log("Client disconnected", socket.id);
+    clearTimeout(patientTimeouts[socket.id]);
     if (patients[socket.id]) {
       if (patients[socket.id].status !== "submitted") {
         patients[socket.id].status = "inactive";
