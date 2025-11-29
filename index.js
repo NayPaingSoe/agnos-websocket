@@ -28,6 +28,12 @@ io.on("connection", (socket) => {
 
   socket.on("patient:update", (data) => {
     patients[socket.id] = { ...patients[socket.id], ...data };
+    if (
+      patients[socket.id].status === "submitted" ||
+      !patients[socket.id].status
+    ) {
+      patients[socket.id].status = "active";
+    }
     io.to("staff").emit("patient:update", {
       id: socket.id,
       ...patients[socket.id],
