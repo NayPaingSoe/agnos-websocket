@@ -78,6 +78,16 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("staff:update", ({ id, data }) => {
+    if (!id || !patients[id]) return;
+    patients[id] = { ...patients[id], ...data };
+    io.to("staff").emit("patient:update", {
+      id,
+      ...patients[id],
+    });
+    io.to(id).emit("patient:sync", patients[id]);
+  });
+
   socket.on("disconnect", () => {
     console.log("Client disconnected", socket.id);
     clearTimeout(patientTimeouts[socket.id]);
